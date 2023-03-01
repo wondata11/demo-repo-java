@@ -1,5 +1,12 @@
 pipeline {
     agent any
+    
+    environment {
+       // ARTIFACTORY_API_TOKEN = credentials('jboss-access-token')
+       // JFROG_PASSWORD = credentials('jfrog-password')
+        SONAR_LOGIN_TOKEN = credentials('sonarqube-login-token-wonde')
+        //SONAR_PASSWORD = credentials('sonarqube-password')
+    }
 
     stages {
         stage('Build') {
@@ -15,6 +22,19 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo 'Deploying....'
+            }
+        }
+        stage('SonarQube analysis') {
+            steps {
+                withSonarQubeEnv('SonarScanner') {
+                    sh "mvn sonar:sonar \
+                        -Dsonar.host.url=localhost:9000 \
+                        -Dsonar.projectKey=java-app-demo \
+                        -Dsonar.login=${SONAR_LOGIN_TOKEN} \
+                        -Dsonar.projectName='java-app-demo' \
+                        -Dsonar.projectVersion=1.0.0 \
+                        -Dsonar.java.binaries=target/classes"
+                }
             }
         }
     }
